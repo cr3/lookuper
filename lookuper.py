@@ -1,6 +1,7 @@
 """Lookup nested data structures."""
 
 import re
+from collections import UserString
 from collections.abc import (
     Callable,
     Mapping,
@@ -18,8 +19,8 @@ except AttributeError:
 
 
 # Lookup types.
-STAR = type('_Star', (), {'__repr__': lambda _: '*'})()
-GLOBSTAR = type('_GlobStar', (), {'__repr__': lambda _: '**'})()
+STAR = type('_Star', (UserString,), {})('*')
+GLOBSTAR = type('_GlobStar', (UserString,), {})('**')
 
 # Match functions.
 ALWAYS = type('_Always', (), {'__call__': lambda *_: True})()

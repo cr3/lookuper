@@ -20,6 +20,14 @@ import pytest
 
 
 @pytest.mark.parametrize(
+    'lookup_type, string', [(STAR, '*'), (GLOBSTAR, '**')],
+)
+def test_lookup_types(lookup_type, string):
+    """Lookup types should behave like strings."""
+    assert lookup_type == string
+
+
+@pytest.mark.parametrize(
     'target, data, matches',
     [
         ([], None, [None]),
