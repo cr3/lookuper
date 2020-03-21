@@ -10,6 +10,9 @@
 .. image:: https://codecov.io/github/cr3/lookuper/branch/master/graph/badge.svg
    :target: https://codecov.io/github/cr3/lookuper/
    :alt: Codecov
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+   :target: https://github.com/psf/black/
+   :alt: Black
 
 ``lookuper`` makes it easy to lookup a target in nested data structures. A
 lookup can return the values matching a target as a string or,
