@@ -3,7 +3,6 @@ python:
 - 3.6
 - 3.7
 - 3.8
-- pypy
 - pypy3
 install:
 - pip install tox-travis
@@ -14,3 +13,5 @@ before_install:
 after_success:
 - tox -e coverage
 - codecov
+notifications:
+  email: false
