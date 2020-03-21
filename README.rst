@@ -1,6 +1,3 @@
-lookuper
-========
-
 .. image:: https://img.shields.io/pypi/v/lookuper.svg
    :target: https://pypi.org/project/lookuper/
    :alt: PyPI
@@ -14,9 +11,9 @@ lookuper
    :target: https://codecov.io/github/cr3/lookuper/
    :alt: Codecov
 
-The ``lookuper`` module makes it easy to lookup a target in nested data
-structures. A lookup can return the values matching a target as a string
-or, equivalently, as a list:
+``lookuper`` makes it easy to lookup a target in nested data structures. A
+lookup can return the values matching a target as a string or,
+equivalently, as a list:
 
 .. code-block:: python
 
@@ -66,3 +63,11 @@ Or to update all lists that contain `0`:
     ...   l.remove(0)
     >>> data
     {'a': [1], 'b': {'c': [2]}}
+
+
+Project information
+===================
+
+``lookuper`` is released under the `MIT <https://choosealicense.com/licenses/mit/>`_ license,
+the code on `GitHub <https://github.com/cr3/lookuper>`_,
+and the latest release on `PyPI <https://pypi.org/project/lookuper/>`_.
