@@ -28,6 +28,17 @@ def test_lookup_types(lookup_type, string):
 
 
 @pytest.mark.parametrize(
+    'func, args, matches',
+    [(ALWAYS, (), True), (ALWAYS, (0,), True), (ALWAYS, (0, 0,), True)],
+)
+def test_match_functions(func, args, matches):
+    """Calling match functions should return the expected result."""
+    result = func(*args)
+
+    assert result == matches
+
+
+@pytest.mark.parametrize(
     'target, data, matches',
     [
         ([], None, [None]),
