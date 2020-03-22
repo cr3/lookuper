@@ -26,7 +26,8 @@ equivalently, as a list:
     >>> list(lookup(['a', 0, 'b'], {'a': [{'b': 1}]}))
     [1]
 
-As a string, a target can contain stars ('*') or globstars ('**'):
+As a string, a target can contain stars (``*``) to match anything and
+globstars (``**``) to match anything recursively:
 
 .. code-block:: python
 
@@ -35,10 +36,15 @@ As a string, a target can contain stars ('*') or globstars ('**'):
     >>> list(lookup('**.b', [{'b': 1}, {'a': {'b': 2}}]))
     [1, 2]
 
-As a list, it can contain regular expressions or functions:
+As a list, the same matching can be achieved with ``STAR`` and
+``GLOBSTAR`` respectively. Additionally, a target can also contain
+regular expressions and functions:
 
 .. code-block:: python
 
+    >>> from lookuper import STAR
+    >>> list(lookup(['a', STAR], {'a': {'b': 1, 'B': 2}}))
+    [1, 2]
     >>> import re
     >>> list(lookup(['a', re.compile(r'[a-z]')], {'a': {'b': 1, 'B': 2}}))
     [1]
@@ -46,27 +52,20 @@ As a list, it can contain regular expressions or functions:
     >>> list(lookup(['a', match_key(str.islower)], {'a': {'b': 1, 'B': 2}}))
     [1]
 
-A lookup can also be useful to update all dictionaries that match the key `b`:
+Extensions
+----------
+
+By default, ``lookuper`` only supports nested data structures like
+mappings, sequences and sets. It can extended to support other types:
 
 .. code-block:: python
 
-    >>> from lookuper import GLOBSTAR, match
-    >>> data = {'a': {'b': 1}, 'c': [{'b': 2}]}
-    >>> for d in lookup([GLOBSTAR, match(key='b')], data):
-    ...   d.update(b=d['b'] + 1)
-    >>> data
-    {'a': {'b': 2}, 'c': [{'b': 3}]}
-
-Or to update all lists that contain `0`:
-
-.. code-block:: python
-
-    >>> data = {'a': [0, 1], 'b': {'c': [0, 2]}}
-    >>> for l in lookup([GLOBSTAR, match(value=0)], data):
-    ...   l.remove(0)
-    >>> data
-    {'a': [1], 'b': {'c': [2]}}
-
+    >>> from lookuper import lookup_data
+    >>> func = lookup_data.register(object, lambda data: (
+    ...     (name, getattr(data, name)) for name in dir(data)
+    ... ))
+    >>> list(lookup('__class__.__doc__', object()))
+    ['The most base type']
 
 Project information
 ===================
