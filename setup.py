@@ -1,4 +1,7 @@
-from setuptools import setup
+from setuptools import (
+    setup,
+    find_packages,
+)
 
 
 setup(
@@ -9,9 +12,11 @@ setup(
     url='https://github.com/cr3/lookuper',
     author='Marc Tardif',
     author_email='marc@interunion.ca',
-    py_modules=['lookuper'],
     setup_requires=['setuptools_scm'],
-    license='MIT license',
+    packages=find_packages(where='src'),
+    package_dir={'': 'src'},
+    py_modules=['lookuper'],
+    license='MIT',
     keywords='lookup nested',
     classifiers=[
         'Development Status :: 4 - Beta',
