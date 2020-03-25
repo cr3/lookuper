@@ -53,7 +53,7 @@ lookup_target = singledispatch(
 lookup_target.register(
     list,
     lambda target, *i: reduce(
-        lambda x, t: (z for y in x for z in lookup_target(t, *y)),
+        lambda j, t: (l for k in j for l in lookup_target(t, *k)),
         target,
         (i,),
     ),

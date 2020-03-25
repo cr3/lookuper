@@ -36,20 +36,20 @@ globstars (``**``) to match anything recursively:
     >>> list(lookup('**.b', [{'b': 1}, {'a': {'b': 2}}]))
     [1, 2]
 
-As a list, the same matching can be achieved with ``STAR`` and
+As a list, the same result can be achieved with ``STAR`` and
 ``GLOBSTAR`` respectively. Additionally, a target can also contain
-regular expressions and functions:
+functions and regular expressions:
 
 .. code-block:: python
 
     >>> from lookuper import STAR
     >>> list(lookup(['a', STAR], {'a': {'b': 1, 'B': 2}}))
     [1, 2]
-    >>> import re
-    >>> list(lookup(['a', re.compile(r'[a-z]')], {'a': {'b': 1, 'B': 2}}))
-    [1]
     >>> from lookuper import match
     >>> list(lookup(['a', match(str.islower)], {'a': {'b': 1, 'B': 2}}))
+    [1]
+    >>> import re
+    >>> list(lookup(['a', re.compile(r'[a-z]')], {'a': {'b': 1, 'B': 2}}))
     [1]
 
 Recipes
@@ -62,8 +62,8 @@ to return only one value:
 .. code-block:: python
 
     >>> from more_itertools import only
-    >>> def lookup1(target, data, **kwargs):
-    ...     return only(lookup(target, data), **kwargs)
+    >>> def lookup1(target, data, **kw):
+    ...     return only(lookup(target, data), **kw)
     >>> lookup1('a', {})
     >>> lookup1('a', {'a': 1})
     1
