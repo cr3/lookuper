@@ -48,9 +48,29 @@ regular expressions and functions:
     >>> import re
     >>> list(lookup(['a', re.compile(r'[a-z]')], {'a': {'b': 1, 'B': 2}}))
     [1]
-    >>> from lookuper import match_key
-    >>> list(lookup(['a', match_key(str.islower)], {'a': {'b': 1, 'B': 2}}))
+    >>> from lookuper import match
+    >>> list(lookup(['a', match(str.islower)], {'a': {'b': 1, 'B': 2}}))
     [1]
+
+Recipes
+-------
+
+``lookuper`` can be combined with other libraries like
+`more-itertools <https://pypi.org/project/more-itertools/>`_
+to return only one value:
+
+.. code-block:: python
+
+    >>> from more_itertools import only
+    >>> def lookup1(target, data, **kwargs):
+    ...     return only(lookup(target, data), **kwargs)
+    >>> lookup1('a', {})
+    >>> lookup1('a', {'a': 1})
+    1
+    >>> lookup1('*', {'a': 1, 'b': 2})
+    Traceback (most recent call last):
+    ...
+    ValueError: Expected exactly one item in iterable, but got 1, 2, and perhaps more.
 
 Extensions
 ----------

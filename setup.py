@@ -7,7 +7,7 @@ from setuptools import (
 setup(
     name='lookuper',
     use_scm_version=True,
-    description='lookup nested data structures',
+    description='Lookup nested data structures',
     long_description=open('README.rst').read(),
     url='https://github.com/cr3/lookuper',
     author='Marc Tardif',
