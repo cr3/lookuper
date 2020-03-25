@@ -5,6 +5,7 @@ import re
 from lookuper import (
     ALWAYS,
     GLOBSTAR,
+    NEVER,
     STAR,
     lookup,
     lookup_data,
@@ -103,7 +104,7 @@ def test_match_functions(func, args, matches):
         ([GLOBSTAR, 'b'], [{'a': {'b': 1}}], [1]),
         ([GLOBSTAR, 'b'], {'a': [{'b': 1}]}, [1]),
         (['a', match_key(0), 'b'], {'a': [{'b': 2}]}, [2]),
-        (['a', match_value(1)], {'a': {'b': 1}}, ['b']),
+        (['a', match_value(1)], {'a': {'b': 1}}, [1]),
     ],
 )
 def test_lookup(target, data, matches):
@@ -111,13 +112,6 @@ def test_lookup(target, data, matches):
     result = list(lookup(target, data))
 
     assert result == matches
-
-
-@pytest.mark.parametrize('target', [0, {}, None])
-def test_lookup_error(target):
-    """Looking up an unsupported target should raise an exception."""
-    with pytest.raises(TypeError):
-        lookup(target, {})
 
 
 @pytest.mark.parametrize(
@@ -148,81 +142,83 @@ def test_lookup_data(data, matches):
 
 
 @pytest.mark.parametrize(
-    'target, key, value, data, matches',
+    'target, key, value, matches',
     [
         # Default
-        ('a', 'a', 1, None, [1]),
-        ('b', 'a', 1, None, []),
+        ('a', None, {'a': 1}, [('a', 1)]),
+        ('b', None, {'a': 1}, []),
+        # List
+        (['a'], None, {'a': 1}, [('a', 1)]),
+        (['a', 'b'], None, {'a': {'b': 1}}, [('b', 1)]),
+        # String
+        ('a', None, {'a': 1}, [('a', 1)]),
+        ('a.b', None, {'a': {'b': 1}}, [('b', 1)]),
         # Callable
-        (match_key('a'), 'a', 1, None, [1]),
-        (match_key('b'), 'a', 1, None, []),
-        (match_value(1), 'a', 1, None, ['a']),
-        (match_value(2), 'a', 1, None, []),
+        (match_key('a'), None, {'a': 1}, [('a', 1)]),
+        (match_key('b'), None, {'a': 1}, []),
+        (match_value(1), None, {'a': 1}, [('a', 1)]),
+        (match_value(2), None, {'a': 1}, []),
         # RePattern
-        (re.compile(r'\w'), 'a', 1, None, [1]),
-        (re.compile(r'\d'), 'a', 1, None, []),
+        (re.compile(r'\w'), None, {'a': 1}, [('a', 1)]),
+        (re.compile(r'\d'), None, {'a': 1}, []),
         # STAR
-        (STAR, 'a', 1, None, [1]),
+        (STAR, None, {'a': 1}, [('a', 1)]),
         # GLOBSTAR
-        (GLOBSTAR, 'a', 1, {}, [{}, 1]),
+        (GLOBSTAR, 'a', {'b': 1}, [('a', {'b': 1}), ('b', 1)]),
     ],
 )
-def test_lookup_target(target, key, value, data, matches):
+def test_lookup_target(target, key, value, matches):
     """Looking up a target from data should yield the expected results."""
-    result = list(lookup_target(target, key, value, data))
+    result = list(lookup_target(target, key, value))
 
     assert result == matches
 
 
 @pytest.mark.parametrize(
-    'func, args, matches',
+    'func, key, value, matches',
     [
-        (match(), ('a', 1, {'a': 1}), [{'a': 1}]),
-        (match(key='a'), ('a', 1, {'a': 1}), [{'a': 1}]),
-        (match(value=1), ('a', 1, {'a': 1}), [{'a': 1}]),
-        (match('a', 1), ('a', 1, {'a': 1}), [{'a': 1}]),
-        (match('b', 1), ('a', 1, {'a': 1}), []),
-        (match('a', 2), ('a', 1, {'a': 1}), []),
+        (match(), 'a', 1, True),
+        (match(key='a'), 'a', 1, True),
+        (match(value=1), 'a', 1, True),
+        (match('a', 1), 'a', 1, True),
+        (match('b', 1), 'a', 1, False),
+        (match('a', 2), 'a', 1, False),
     ],
 )
-def test_match(func, args, matches):
+def test_match(func, key, value, matches):
     """Matching key/value pairs should return the expected data."""
-    result = list(func(*args))
+    result = func(key, value)
 
     assert result == matches
 
 
 @pytest.mark.parametrize(
-    'key, args, matches',
+    'target, key, value, matches',
     [
-        (ALWAYS, ('a', 1, {}), [1]),
-        ('a', ('a', 1, {}), [1]),
-        ('b', ('a', 1, {}), []),
-        (ALWAYS, (0, 'a', []), ['a']),
-        (0, (0, 'a', []), ['a']),
-        (1, (0, 'a', []), []),
+        (ALWAYS, 'a', 1, True),
+        (NEVER, 'a', 1, False),
+        ('a', 'a', 1, True),
+        ('b', 'a', 1, False),
     ],
 )
-def test_match_key(key, args, matches):
+def test_match_key(target, key, value, matches):
     """Matching a key should return the expected value."""
-    result = list(match_key(key)(*args))
+    result = match_key(target)(key, value)
 
     assert result == matches
 
 
 @pytest.mark.parametrize(
-    'value, args, matches',
+    'target, key, value, matches',
     [
-        (ALWAYS, ('a', 1, {}), ['a']),
-        (1, ('a', 1, {}), ['a']),
-        (2, ('a', 1, {}), []),
-        (ALWAYS, (0, '', []), [0]),
-        ('a', (0, 'a', []), [0]),
-        ('b', (0, 'a', []), []),
+        (ALWAYS, 0, 'a', True),
+        (NEVER, 0, 'a', False),
+        ('a', 0, 'a', True),
+        ('b', 0, 'a', False),
     ],
 )
-def test_match_value(value, args, matches):
+def test_match_value(target, key, value, matches):
     """Matching a value should return the expected key."""
-    result = list(match_value(value)(*args))
+    result = match_value(target)(key, value)
 
     assert result == matches
