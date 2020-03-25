@@ -13,6 +13,7 @@ dist/
 .tox/
 .cache
 .coverage*
+coverage.xml
 
 # pyenv
 .python-version

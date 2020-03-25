@@ -22,7 +22,7 @@ from operator import (
 try:
     # New in version 3.7
     RePattern = re.Pattern
-except AttributeError:
+except AttributeError:  # pragma: no cover
     RePattern = type(re.compile(''))
 
 

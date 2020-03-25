@@ -15,7 +15,6 @@ setup(
     setup_requires=['setuptools_scm'],
     packages=find_packages(where='src'),
     package_dir={'': 'src'},
-    py_modules=['lookuper'],
     license='MIT',
     keywords='lookup nested',
     classifiers=[

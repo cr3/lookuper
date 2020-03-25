@@ -82,10 +82,10 @@ mappings, sequences and sets. It can extended to support other types:
 
     >>> from lookuper import lookup_data
     >>> func = lookup_data.register(object, lambda data: (
-    ...     (name, getattr(data, name)) for name in dir(data)
+    ...     (name, getattr(data, name, None)) for name in dir(data)
     ... ))
-    >>> list(lookup('__class__.__doc__', object()))
-    ['The most base type']
+    >>> list(lookup('__class__.__class__.__name__', object()))
+    ['type']
 
 Project information
 ===================
