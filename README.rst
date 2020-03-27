@@ -48,8 +48,7 @@ expressions:
 
 .. code-block:: python
 
-    >>> from lookuper import match
-    >>> list(lookup({'a': {'b': 1, 'B': 2}}, 'a', match(str.islower)))
+    >>> list(lookup({'a': {'b': 1, 'B': 2}}, 'a', str.islower))
     [1]
     >>> import re
     >>> list(lookup({'a': {'b': 1, 'B': 2}}, 'a', re.compile(r'[a-z]')))

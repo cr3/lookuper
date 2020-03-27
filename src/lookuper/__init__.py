@@ -9,12 +9,11 @@ from collections.abc import (
     Set,
 )
 from functools import (
-    partial,
     reduce,
     singledispatch,
 )
+from itertools import starmap
 from operator import (
-    eq,
     itemgetter,
     methodcaller,
 )
@@ -26,18 +25,42 @@ except AttributeError:  # pragma: no cover
     RePattern = type(re.compile(''))
 
 
+# Match functions.
+ANY = type(
+    '_Any', (), {'__call__': lambda *_: True, '__repr__': lambda _: 'ANY'}
+)()
+
 # Lookup types.
 STAR = type('_Star', (UserString,), {})('*')
 GLOBSTAR = type('_GlobStar', (UserString,), {})('**')
 
-# Match functions.
-ALWAYS = type('_Always', (), {'__call__': lambda *_: True})()
-NEVER = type('_Never', (), {'__call__': lambda *_: False})()
+
+class Match:
+    """Match a key/value pair."""
+
+    def __init__(self, key=ANY, value=ANY):
+        self.key = key
+        self.value = value
+
+    def __call__(self, key, value):
+        return all(
+            starmap(
+                lambda target, arg: (
+                    target(arg) if callable(target) else target == arg
+                ),
+                zip((self.key, self.value), (key, value)),
+            )
+        )
+
+    def __repr__(self):
+        return '{cls}(key={key!r}, value={value!r})'.format(
+            cls=self.__class__.__name__, key=self.key, value=self.value,
+        )
 
 
 def lookup(data, *targets):
     """Lookup a matching `target` in `data`."""
-    return map(itemgetter(1), lookup_target(targets, ALWAYS, data))
+    return map(itemgetter(1), lookup_target(targets, ANY, data))
 
 
 lookup_data = singledispatch(lambda _: ())
@@ -48,7 +71,7 @@ lookup_data.register(Set, lambda data: zip(data, data))
 lookup_data.register(str, lambda _: ())
 
 lookup_target = singledispatch(
-    lambda target, *i: lookup_target(match(target), *i)
+    lambda target, *i: lookup_target(Match(target), *i)
 )
 lookup_target.register(
     Sequence,
@@ -68,7 +91,7 @@ lookup_target.register(
             if k == '**'
             else int(k)
             if k.isdigit()
-            else match(re.sub(r'\\([\.\*])', r'\1', k))
+            else Match(re.sub(r'\\([\.\*])', r'\1', k))
             for k in re.split(r'(?<!\\)\.', target)
         ]
         if target
@@ -77,10 +100,13 @@ lookup_target.register(
     ),
 )
 lookup_target.register(
-    Callable, lambda target, _, v: (j for j in lookup_data(v) if target(*j))
+    Match, lambda target, _, v: (j for j in lookup_data(v) if target(*j))
 )
 lookup_target.register(
-    RePattern, lambda target, *i: lookup_target(match(target.match), *i)
+    Callable, lambda target, *i: lookup_target(Match(target), *i)
+)
+lookup_target.register(
+    RePattern, lambda target, *i: lookup_target(target.match, *i)
 )
 lookup_target.register(type(STAR), lambda target, _, v: lookup_data(v))
 lookup_target.register(
@@ -89,17 +115,3 @@ lookup_target.register(
         (i, *(k for j in lookup_data(i[1]) for k in lookup_target(target, *j)))
     ),
 )
-
-
-def match(key=ALWAYS, value=ALWAYS):
-    """Match a key/value pair within lookups."""
-    key_func = match_key(key)
-    value_func = match_value(value)
-    return lambda *i: key_func(*i) and value_func(*i)
-
-
-# Higher-order functions to match within lookups.
-match_key = singledispatch(lambda key: match_key(partial(eq, key)))
-match_key.register(Callable, lambda func: (lambda k, _: func(k)))
-match_value = singledispatch(lambda value: match_value(partial(eq, value)))
-match_value.register(Callable, lambda func: (lambda _, v: func(v)))
