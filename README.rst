@@ -15,44 +15,38 @@
    :alt: Black
 
 ``lookuper`` makes it easy to lookup a target in nested data structures. A
-lookup can return the values matching a target as a string or,
-equivalently, as an arguments list:
+lookup yields the values matching a target as an arguments list:
 
 .. code-block:: python
 
     >>> from lookuper import lookup
-    >>> list(lookup({'a': [{'b': 1}]}, 'a.0.b'))
-    [1]
     >>> list(lookup({'a': [{'b': 1}]}, 'a', 0, 'b'))
     [1]
 
-As a string, a target can contain stars (``*``) to match anything and
-globstars (``**``) to match anything recursively:
+A target can contain stars (``*``) to match anything and globstars
+(``**``) to match anything recursively:
 
 .. code-block:: python
 
-    >>> list(lookup({'a': {'b': 1, 'B': 2}}, 'a.*'))
+    >>> list(lookup({'a': {'b': 1, 'B': 2}}, 'a', '*'))
     [1, 2]
-    >>> list(lookup([{'b': 1}, {'a': {'b': 2}}], '**.b'))
+    >>> list(lookup([{'b': 1}, {'a': {'b': 2}}], '**', 'b'))
     [1, 2]
 
-Note that these special characters, including the dot (``.``), can be escaped:
+Note that these special characters can be escaped:
 
     >>> list(lookup({'*': 1}, r'\*'))
     [1]
-    >>> list(lookup({'a.b': 1}, r'a\.b'))
-    [1]
 
-As an arguments list, a target can also contain functions and regular
-expressions:
+A target can also contain functions and regular expressions:
 
 .. code-block:: python
 
-    >>> list(lookup({'a': {'b': 1, 'B': 2}}, 'a', str.islower))
-    [1]
+    >>> list(lookup({'a': {'b', 'B'}}, 'a', str.islower))
+    ['b']
     >>> import re
-    >>> list(lookup({'a': {'b': 1, 'B': 2}}, 'a', re.compile(r'[a-z]')))
-    [1]
+    >>> list(lookup({'a': {'b', 'B'}}, 'a', re.compile(r'[a-z]')))
+    ['b']
 
 Recipes
 -------
@@ -86,7 +80,7 @@ mappings, sequences and sets. It can extended to support other types:
     >>> func = lookup_data.register(object, lambda data: (
     ...     (name, getattr(data, name, None)) for name in dir(data)
     ... ))
-    >>> list(lookup(object(), '__class__.__class__.__name__'))
+    >>> list(lookup(object(), '__class__', '__class__', '__name__'))
     ['type']
 
 Project information

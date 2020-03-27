@@ -25,14 +25,10 @@ except AttributeError:  # pragma: no cover
     RePattern = type(re.compile(''))
 
 
-# Match functions.
+# Match constants.
 ANY = type(
     '_Any', (), {'__call__': lambda *_: True, '__repr__': lambda _: 'ANY'}
 )()
-
-# Lookup types.
-STAR = type('_Star', (UserString,), {})('*')
-GLOBSTAR = type('_GlobStar', (UserString,), {})('**')
 
 
 class Match:
@@ -56,6 +52,11 @@ class Match:
         return '{cls}(key={key!r}, value={value!r})'.format(
             cls=self.__class__.__name__, key=self.key, value=self.value,
         )
+
+
+# Lookup constants.
+STAR = type('_Star', (UserString,), {})('*')
+GLOBSTAR = type('_GlobStar', (UserString,), {})('**')
 
 
 def lookup(data, *targets):
@@ -84,20 +85,15 @@ lookup_target.register(
 lookup_target.register(
     str,
     lambda target, *i: lookup_target(
-        [
-            STAR
-            if k == '*'
-            else GLOBSTAR
-            if k == '**'
-            else int(k)
-            if k.isdigit()
-            else Match(re.sub(r'\\([\.\*])', r'\1', k))
-            for k in re.split(r'(?<!\\)\.', target)
-        ]
-        if target
-        else [],
+        STAR
+        if target == '*'
+        else GLOBSTAR
+        if target == '**'
+        else Match(re.sub(r'\\(\*)', r'\1', target)),
         *i
-    ),
+    )
+    if target
+    else (),
 )
 lookup_target.register(
     Match, lambda target, _, v: (j for j in lookup_data(v) if target(*j))
