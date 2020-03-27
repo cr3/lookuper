@@ -35,9 +35,9 @@ ALWAYS = type('_Always', (), {'__call__': lambda *_: True})()
 NEVER = type('_Never', (), {'__call__': lambda *_: False})()
 
 
-def lookup(target, data):
+def lookup(data, *targets):
     """Lookup a matching `target` in `data`."""
-    return map(itemgetter(1), lookup_target(target, ALWAYS, data))
+    return map(itemgetter(1), lookup_target(targets, ALWAYS, data))
 
 
 lookup_data = singledispatch(lambda _: ())
@@ -51,7 +51,7 @@ lookup_target = singledispatch(
     lambda target, *i: lookup_target(match(target), *i)
 )
 lookup_target.register(
-    list,
+    Sequence,
     lambda target, *i: reduce(
         lambda j, t: (l for k in j for l in lookup_target(t, *k)),
         target,
@@ -68,8 +68,8 @@ lookup_target.register(
             if k == '**'
             else int(k)
             if k.isdigit()
-            else match(k)
-            for k in target.split('.')
+            else match(re.sub(r'\\([\.\*])', r'\1', k))
+            for k in re.split(r'(?<!\\)\.', target)
         ]
         if target
         else [],

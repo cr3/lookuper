@@ -16,14 +16,14 @@
 
 ``lookuper`` makes it easy to lookup a target in nested data structures. A
 lookup can return the values matching a target as a string or,
-equivalently, as a list:
+equivalently, as an arguments list:
 
 .. code-block:: python
 
     >>> from lookuper import lookup
-    >>> list(lookup('a.0.b', {'a': [{'b': 1}]}))
+    >>> list(lookup({'a': [{'b': 1}]}, 'a.0.b'))
     [1]
-    >>> list(lookup(['a', 0, 'b'], {'a': [{'b': 1}]}))
+    >>> list(lookup({'a': [{'b': 1}]}, 'a', 0, 'b'))
     [1]
 
 As a string, a target can contain stars (``*``) to match anything and
@@ -31,25 +31,28 @@ globstars (``**``) to match anything recursively:
 
 .. code-block:: python
 
-    >>> list(lookup('a.*', {'a': {'b': 1, 'B': 2}}))
+    >>> list(lookup({'a': {'b': 1, 'B': 2}}, 'a.*'))
     [1, 2]
-    >>> list(lookup('**.b', [{'b': 1}, {'a': {'b': 2}}]))
+    >>> list(lookup([{'b': 1}, {'a': {'b': 2}}], '**.b'))
     [1, 2]
 
-As a list, the same result can be achieved with ``STAR`` and
-``GLOBSTAR`` respectively. Additionally, a target can also contain
-functions and regular expressions:
+Note that these special characters, including the dot (``.``), can be escaped:
+
+    >>> list(lookup({'*': 1}, r'\*'))
+    [1]
+    >>> list(lookup({'a.b': 1}, r'a\.b'))
+    [1]
+
+As an arguments list, a target can also contain functions and regular
+expressions:
 
 .. code-block:: python
 
-    >>> from lookuper import STAR
-    >>> list(lookup(['a', STAR], {'a': {'b': 1, 'B': 2}}))
-    [1, 2]
     >>> from lookuper import match
-    >>> list(lookup(['a', match(str.islower)], {'a': {'b': 1, 'B': 2}}))
+    >>> list(lookup({'a': {'b': 1, 'B': 2}}, 'a', match(str.islower)))
     [1]
     >>> import re
-    >>> list(lookup(['a', re.compile(r'[a-z]')], {'a': {'b': 1, 'B': 2}}))
+    >>> list(lookup({'a': {'b': 1, 'B': 2}}, 'a', re.compile(r'[a-z]')))
     [1]
 
 Recipes
@@ -62,12 +65,12 @@ to return only one value:
 .. code-block:: python
 
     >>> from more_itertools import only
-    >>> def lookup1(target, data, **kw):
-    ...     return only(lookup(target, data), **kw)
-    >>> lookup1('a', {})
-    >>> lookup1('a', {'a': 1})
+    >>> def lookup1(data, *targets, **kw):
+    ...     return only(lookup(data, *targets), **kw)
+    >>> lookup1({}, 'a')
+    >>> lookup1({'a': 1}, 'a')
     1
-    >>> lookup1('*', {'a': 1, 'b': 2})
+    >>> lookup1({'a': 1, 'b': 2}, '*')
     Traceback (most recent call last):
     ...
     ValueError: Expected exactly one item in iterable, but got 1, 2, and perhaps more.
@@ -84,7 +87,7 @@ mappings, sequences and sets. It can extended to support other types:
     >>> func = lookup_data.register(object, lambda data: (
     ...     (name, getattr(data, name, None)) for name in dir(data)
     ... ))
-    >>> list(lookup('__class__.__class__.__name__', object()))
+    >>> list(lookup(object(), '__class__.__class__.__name__'))
     ['type']
 
 Project information
