@@ -3,7 +3,7 @@
 import re
 
 from lookuper import (
-    ANY,
+    anything,
     GLOBSTAR,
     STAR,
     lookup,
@@ -15,19 +15,25 @@ from lookuper import (
 import pytest
 
 
+def test_anything_new():
+    """Initializing anything should return the same instance."""
+    result = type(anything)()
+
+    assert result is anything
+
+
 @pytest.mark.parametrize(
-    'constant, args, expected',
-    [(ANY, (), True), (ANY, (0,), True), (ANY, (0, 0,), True)],
+    'b', [0, 1, True, False, None],
 )
-def test_match_constants(constant, args, expected):
-    """Calling match constants should always return the same value."""
-    result = constant(*args)
+def test_anything_call(b):
+    """Mathing anything should always return True."""
+    result = anything(b)
 
-    assert result == expected
+    assert result is True
 
 
 @pytest.mark.parametrize(
-    'func, key, value, expected',
+    'match, key, value, expected',
     [
         (Match(), 'a', 1, True),
         (Match(key='a'), 'a', 1, True),
@@ -39,28 +45,28 @@ def test_match_constants(constant, args, expected):
         (Match('a', 2), 'a', 1, False),
     ],
 )
-def test_match_call(func, key, value, expected):
+def test_match_call(match, key, value, expected):
     """Matching key/value pairs should return the expected result."""
-    result = func(key, value)
+    result = match(key, value)
 
-    assert result == expected
+    assert result is expected
 
 
 @pytest.mark.parametrize(
-    'func, expected',
+    'match, expected',
     [
-        (ANY, 'ANY'),
-        (Match(), 'Match(key=ANY, value=ANY)'),
-        (Match(1), 'Match(key=1, value=ANY)'),
-        (Match('a'), "Match(key='a', value=ANY)"),
-        (Match(value=1), 'Match(key=ANY, value=1)'),
-        (Match(value='a'), "Match(key=ANY, value='a')"),
+        (anything, 'ANYTHING'),
+        (Match(), 'Match(key=ANYTHING, value=ANYTHING)'),
+        (Match(1), 'Match(key=1, value=ANYTHING)'),
+        (Match('a'), "Match(key='a', value=ANYTHING)"),
+        (Match(value=1), 'Match(key=ANYTHING, value=1)'),
+        (Match(value='a'), "Match(key=ANYTHING, value='a')"),
         (Match(1, 2), 'Match(key=1, value=2)'),
     ],
 )
-def test_match_repr(func, expected):
-    """Representating match functions should return the expected result."""
-    result = repr(func)
+def test_match_repr(match, expected):
+    """Representing matches should return the expected result."""
+    result = repr(match)
 
     assert result == expected
 
@@ -171,10 +177,7 @@ def test_lookup_data(data, expected):
         # Default
         ('a', None, {'a': 1}, [('a', 1)]),
         ('b', None, {'a': 1}, []),
-        # List
-        (['a'], None, {'a': 1}, [('a', 1)]),
-        (['a', 'b'], None, {'a': {'b': 1}}, [('b', 1)]),
-        # String
+        # str
         ('a', None, {'a': 1}, [('a', 1)]),
         ('b', None, {'a': 1}, []),
         ('*', None, {'a': 1}, [('a', 1)]),
@@ -196,6 +199,9 @@ def test_lookup_data(data, expected):
         # RePattern
         (re.compile(r'\w'), None, {'a': 1}, [('a', 1)]),
         (re.compile(r'\d'), None, {'a': 1}, []),
+        # Sequence
+        (['a'], None, {'a': 1}, [('a', 1)]),
+        (['a', 'b'], None, {'a': {'b': 1}}, [('b', 1)]),
         # STAR
         (STAR, None, {'a': 1}, [('a', 1)]),
         (STAR, None, {'a': 1, 'b': 2}, [('a', 1), ('b', 2)]),

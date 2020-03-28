@@ -15,7 +15,7 @@
    :alt: Black
 
 ``lookuper`` makes it easy to lookup a target in nested data structures. A
-lookup yields the values matching a target as an arguments list:
+lookup yields the values matching a target passed as an arguments list:
 
 .. code-block:: python
 
@@ -34,6 +34,8 @@ A target can contain stars (``*``) to match anything and globstars
     [1, 2]
 
 Note that these special characters can be escaped:
+
+.. code-block:: python
 
     >>> list(lookup({'*': 1}, r'\*'))
     [1]
@@ -77,7 +79,7 @@ mappings, sequences and sets. It can extended to support other types:
 .. code-block:: python
 
     >>> from lookuper import lookup_data
-    >>> func = lookup_data.register(object, lambda data: (
+    >>> _ = lookup_data.register(object, lambda data: (
     ...     (name, getattr(data, name, None)) for name in dir(data)
     ... ))
     >>> list(lookup(object(), '__class__', '__class__', '__name__'))

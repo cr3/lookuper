@@ -12,7 +12,6 @@ from functools import (
     reduce,
     singledispatch,
 )
-from itertools import starmap
 from operator import (
     itemgetter,
     methodcaller,
@@ -25,28 +24,59 @@ except AttributeError:  # pragma: no cover
     RePattern = type(re.compile(''))
 
 
-# Match constants.
-ANY = type(
-    '_Any', (), {'__call__': lambda *_: True, '__repr__': lambda _: 'ANY'}
-)()
+class _Anything:
+    """Callable class to match anything by always returning `True`.
+
+    This is a singleton - there is only ever one of it.
+    """
+
+    _singleton = None
+
+    def __new__(cls):
+        if _Anything._singleton is None:
+            _Anything._singleton = super(_Anything, cls).__new__(cls)
+        return _Anything._singleton
+
+    def __call__(self, _):
+        return True
+
+    def __repr__(self):
+        return 'ANYTHING'
+
+
+anything = _Anything()
+"""Callable to match anything by always returning `True`."""
+
+
+class _Something:
+    """Callable class to match equality with a value."""
+
+    __slots__ = ('a',)
+
+    def __init__(self, a):
+        self.a = a
+
+    def __call__(self, b):
+        return self.a == b
+
+    def __repr__(self):
+        return repr(self.a)
 
 
 class Match:
     """Match a key/value pair."""
 
-    def __init__(self, key=ANY, value=ANY):
-        self.key = key
-        self.value = value
+    __slots__ = (
+        'key',
+        'value',
+    )
+
+    def __init__(self, key=anything, value=anything):
+        self.key = key if callable(key) else _Something(key)
+        self.value = value if callable(value) else _Something(value)
 
     def __call__(self, key, value):
-        return all(
-            starmap(
-                lambda target, arg: (
-                    target(arg) if callable(target) else target == arg
-                ),
-                zip((self.key, self.value), (key, value)),
-            )
-        )
+        return self.key(key) and self.value(value)
 
     def __repr__(self):
         return '{cls}(key={key!r}, value={value!r})'.format(
@@ -61,7 +91,7 @@ GLOBSTAR = type('_GlobStar', (UserString,), {})('**')
 
 def lookup(data, *targets):
     """Lookup a matching `target` in `data`."""
-    return map(itemgetter(1), lookup_target(targets, ANY, data))
+    return map(itemgetter(1), lookup_target(targets, anything, data))
 
 
 lookup_data = singledispatch(lambda _: ())
@@ -73,14 +103,6 @@ lookup_data.register(str, lambda _: ())
 
 lookup_target = singledispatch(
     lambda target, *i: lookup_target(Match(target), *i)
-)
-lookup_target.register(
-    Sequence,
-    lambda target, *i: reduce(
-        lambda j, t: (l for k in j for l in lookup_target(t, *k)),
-        target,
-        (i,),
-    ),
 )
 lookup_target.register(
     str,
@@ -96,13 +118,21 @@ lookup_target.register(
     else (),
 )
 lookup_target.register(
-    Match, lambda target, _, v: (j for j in lookup_data(v) if target(*j))
-)
-lookup_target.register(
     Callable, lambda target, *i: lookup_target(Match(target), *i)
 )
 lookup_target.register(
+    Match, lambda target, _, v: (j for j in lookup_data(v) if target(*j))
+)
+lookup_target.register(
     RePattern, lambda target, *i: lookup_target(target.match, *i)
+)
+lookup_target.register(
+    Sequence,
+    lambda target, *i: reduce(
+        lambda j, t: (l for k in j for l in lookup_target(t, *k)),
+        target,
+        (i,),
+    ),
 )
 lookup_target.register(type(STAR), lambda target, _, v: lookup_data(v))
 lookup_target.register(
